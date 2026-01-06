@@ -172,8 +172,12 @@ app.post("/api/chat", async (req, res) => {
 
     } catch (error) {
         console.error("Error processing chat request:", error);
+
+        // Clear the session to prevent corrupted history from causing issues
+        sessions.delete(sessionId);
+
         res.status(500).json({
-            error: "An error occurred while processing your request",
+            error: "An error occurred. Your conversation has been reset. Please try again.",
             details: error.message
         });
     }
