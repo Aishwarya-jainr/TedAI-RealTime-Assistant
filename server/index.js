@@ -88,6 +88,11 @@ app.post("/api/chat", async (req, res) => {
         // Add user message to history
         history.push({ role: "user", content: query });
 
+        // Keep only last 10 messages to avoid token limits (5 user + 5 assistant)
+        if (history.length > 10) {
+            history.splice(0, history.length - 10);
+        }
+
         let finalResponse = null;
         let attempts = 0;
         const maxAttempts = 5; // Prevent infinite loops
@@ -107,7 +112,7 @@ app.post("/api/chat", async (req, res) => {
                 tools: [searchWebTool],
                 tool_choice: "auto",
                 temperature: 0.7,
-                max_tokens: 1024
+                max_tokens: 512 // Reduced from 1024 to stay within limits
             });
 
             const aiMessage = response.choices[0].message;
