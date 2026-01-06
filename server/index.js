@@ -144,9 +144,13 @@ app.post("/api/chat", async (req, res) => {
                         content: content
                     });
                 }
-            } else {
+            } else if (aiMessage.content && aiMessage.content.trim()) {
                 // Got final text response
                 finalResponse = aiMessage.content;
+                history.push({ role: "assistant", content: finalResponse });
+            } else {
+                // Empty response - provide a default error message
+                finalResponse = "I apologize, but I'm having trouble generating a response right now. Please try rephrasing your question or try again.";
                 history.push({ role: "assistant", content: finalResponse });
             }
         }
