@@ -105,14 +105,14 @@ app.post("/api/chat", async (req, res) => {
                 messages: [
                     {
                         role: "system",
-                        content: "You are TedAI, a helpful assistant. Answer questions concisely. Use search_web tool for current events."
+                        content: "You are TedAI, a helpful and intelligent assistant. Provide detailed, comprehensive answers to user questions. Use the search_web tool when users ask about current events, news, or real-time information. Only provide brief answers if the user specifically asks for a summary or short response."
                     },
                     ...history
                 ],
                 tools: [searchWebTool],
                 tool_choice: "auto",
                 temperature: 0.7,
-                max_tokens: 256 // Reduced from 512 to stay within limits
+                max_tokens: 1024 // Increased for detailed responses
             });
 
             const aiMessage = response.choices[0].message;
@@ -135,10 +135,10 @@ app.post("/api/chat", async (req, res) => {
                     const toolResult = await tools[functionName](functionArgs);
 
                     // Truncate search results to avoid token overflow
-                    const truncatedResults = toolResult.slice(0, 2); // Only use first 2 results
+                    const truncatedResults = toolResult.slice(0, 3); // Use first 3 results
                     const content = truncatedResults.map(r => {
-                        // Limit each result to 200 chars
-                        const truncatedContent = r.content.substring(0, 200);
+                        // Limit each result to 400 chars for better context
+                        const truncatedContent = r.content.substring(0, 400);
                         return `${r.title}\n${truncatedContent}...\nURL: ${r.url}`;
                     }).join("\n\n");
 
