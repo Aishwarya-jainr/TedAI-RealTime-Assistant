@@ -88,14 +88,14 @@ app.post("/api/chat", async (req, res) => {
         // Add user message to history
         history.push({ role: "user", content: query });
 
-        // Keep only last 10 messages to avoid token limits (5 user + 5 assistant)
-        if (history.length > 10) {
-            history.splice(0, history.length - 10);
+        // Keep only last 4 messages to stay well within token limits (2 exchanges)
+        if (history.length > 4) {
+            history.splice(0, history.length - 4);
         }
 
         let finalResponse = null;
         let attempts = 0;
-        const maxAttempts = 5; // Prevent infinite loops
+        const maxAttempts = 3; // Reduced from 5
 
         while (!finalResponse && attempts < maxAttempts) {
             attempts++;
@@ -105,14 +105,14 @@ app.post("/api/chat", async (req, res) => {
                 messages: [
                     {
                         role: "system",
-                        content: "You are a helpful AI assistant. You can use tools to get more information when needed. When users ask about current events, news, or information that requires up-to-date data, use the search_web tool. Provide clear, accurate, and helpful responses to user queries."
+                        content: "You are TedAI, a helpful assistant. Answer questions concisely. Use search_web tool for current events."
                     },
                     ...history
                 ],
                 tools: [searchWebTool],
                 tool_choice: "auto",
                 temperature: 0.7,
-                max_tokens: 512 // Reduced from 1024 to stay within limits
+                max_tokens: 256 // Reduced from 512 to stay within limits
             });
 
             const aiMessage = response.choices[0].message;
@@ -134,8 +134,13 @@ app.post("/api/chat", async (req, res) => {
                     // Execute the tool
                     const toolResult = await tools[functionName](functionArgs);
 
-                    // Format search results
-                    const content = toolResult.map(r => `${r.title}\n${r.content}\nURL: ${r.url}`).join("\n\n");
+                    // Truncate search results to avoid token overflow
+                    const truncatedResults = toolResult.slice(0, 2); // Only use first 2 results
+                    const content = truncatedResults.map(r => {
+                        // Limit each result to 200 chars
+                        const truncatedContent = r.content.substring(0, 200);
+                        return `${r.title}\n${truncatedContent}...\nURL: ${r.url}`;
+                    }).join("\n\n");
 
                     // Add tool result to history
                     history.push({
